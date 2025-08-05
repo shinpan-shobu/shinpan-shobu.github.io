@@ -270,7 +270,7 @@
 
     <!-- Video Game Screen -->
     <div id="videoContainer" style="display:none;">
-        <video id="video"></video>
+        <video id="video" preload="metadata" playsinline webkit-playsinline></video>
         <div id="overlay">
             <button class="btn red" onclick="makeChoice('r')">Aka</button>
             <button class="btn white" onclick="makeChoice('w')">Shiro</button>
@@ -434,7 +434,7 @@
             const level = levels.find(l => l.id === levelId);
             
             // Load the video
-            video.src = `vid/${level.folderNumber}/${currentVideoNumber}`;
+            video.src = `v/${level.folderNumber}/${currentVideoNumber}`;
             
             // Reset video state
             gameStarted = false;
@@ -448,8 +448,19 @@
         function startVideoOnce() {
             if (!gameStarted) {
                 video.currentTime = 0;
-                video.play();
-                gameStarted = true;
+                // Use a promise-based approach for better iOS compatibility
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        gameStarted = true;
+                    }).catch(error => {
+                        console.log("Auto-play was prevented:", error);
+                        // On iOS, we might need user interaction to play
+                        gameStarted = true;
+                    });
+                } else {
+                    gameStarted = true;
+                }
                 document.removeEventListener('click', startVideoOnce);
             }
         }
@@ -458,6 +469,19 @@
         video.addEventListener('loadedmetadata', function() {
             videoDuration = video.duration;
             // Hide loading overlay when video is ready
+            loadingOverlay.style.visibility = 'hidden';
+        });
+
+        // Add error handling for video loading issues
+        video.addEventListener('error', function(e) {
+            console.error('Video error:', e);
+            loadingOverlay.style.visibility = 'hidden';
+            alert('Error loading video. Please check your internet connection and try again.');
+            returnToSelection();
+        });
+
+        // Add additional event for when video can play
+        video.addEventListener('canplay', function() {
             loadingOverlay.style.visibility = 'hidden';
         });
 
@@ -499,7 +523,13 @@
                 // Play the rest of the video after showing correct message
                 setTimeout(() => {
                     resultOverlay.style.visibility = 'hidden';
-                    video.play();
+                    // Use promise-based play for iOS compatibility
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Play was prevented:", error);
+                        });
+                    }
                     
                     // When video ends, return to selection
                     video.addEventListener('ended', function() {
@@ -514,7 +544,13 @@
                 // Play the rest of the video to show the correct answer
                 setTimeout(() => {
                     resultOverlay.style.visibility = 'hidden';
-                    video.play();
+                    // Use promise-based play for iOS compatibility
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Play was prevented:", error);
+                        });
+                    }
                     
                     // When video ends, return to selection
                     video.addEventListener('ended', function() {
