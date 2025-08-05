@@ -47,10 +47,10 @@
         }
         #resetBtn {
             position: absolute;
-            top: 20px;
+            top: env(safe-area-inset-top, 20px);
             right: 20px;
-            padding: 10px 20px;
-            font-size: 1em;
+            padding: 8px 15px;
+            font-size: clamp(0.8em, 2vw, 1em);
             background: #d32f2f;
             color: #fff;
             border: 2px solid #fff;
@@ -58,10 +58,22 @@
             cursor: pointer;
             transition: all 0.3s;
             z-index: 10;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         #resetBtn:hover {
             background: #f44336;
             transform: scale(1.05);
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            #selectionScreen h1 {
+                padding-right: 0;
+                margin-top: 60px; /* Move title down on mobile */
+            }
         }
         #levelsContainer {
             display: grid;
@@ -129,7 +141,7 @@
             color: #fff;
         }
         .progress-box.incorrect {
-            background: #f44336;
+            background: #333;
             color: #fff;
         }
         #videoContainer {
