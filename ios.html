@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Shinpan Shobu</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #selectionScreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: #000;
+            z-index: 3;
+            padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px) 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            width: 100vw;
+            height: 100vh;
+        }
+        #selectionScreen h1 {
+            color: #fff;
+            font-size: clamp(2em, 5vw, 3em);
+            margin: 20px 0 30px 0;
+            text-align: center;
+        }
+        #resetBtn {
+            position: absolute;
+            top: env(safe-area-inset-top, 20px);
+            right: 20px;
+            padding: 8px 15px;
+            font-size: clamp(0.8em, 2vw, 1em);
+            background: #d32f2f;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #resetBtn:hover {
+            background: #f44336;
+            transform: scale(1.05);
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            #selectionScreen h1 {
+                padding-right: 0;
+                margin-top: 60px; /* Move title down on mobile */
+            }
+        }
+        #levelsContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 1000px;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        .level-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .selection-btn {
+            width: 100%;
+            max-width: 200px;
+            height: 60px;
+            margin: 8px 0;
+            font-size: clamp(1em, 2.5vw, 1.4em);
+            font-weight: bold;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #333;
+            color: #fff;
+            transition: all 0.3s;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .selection-btn:hover {
+            background: #555;
+            transform: scale(1.02);
+        }
+        .selection-btn:disabled {
+            background: #222;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .progress-boxes {
+            display: flex;
+            justify-content: center;
+            margin-top: 8px;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .progress-box {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #fff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1em;
+            font-weight: bold;
+            background: #333;
+            flex-shrink: 0;
+        }
+        .progress-box.correct {
+            background: #4caf50;
+            color: #fff;
+        }
+        .progress-box.incorrect {
+            background: #333;
+            color: #fff;
+        }
+        #videoContainer {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            top: 0;
+            left: 0;
+        }
+        video {
+            max-width: 100vw;
+            max-height: 100vh;
+            display: block;
+        }
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            z-index: 2;
+            flex-direction: row;
+            visibility: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: min(40vw, 300px);
+            height: min(40vw, 300px);
+            margin: min(3vw, 20px);
+            font-size: clamp(1em, 4vw, 2em);
+            font-weight: bold;
+            border: none;
+            border-radius: min(2vw, 15px);
+            cursor: pointer;
+            color: #fff;
+            transition: transform 0.1s;
+            max-width: 45%;
+            max-height: 45%;
+            min-width: 120px;
+            min-height: 120px;
+        }
+        .btn.red {
+            background: #e53935;
+            color: #000000;
+            border: min(0.5vw, 3px) solid #000000;
+        }
+        .btn.white {
+            background: #fff;
+            color: #000000;
+            border: min(0.5vw, 3px) solid #000000;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        #resultOverlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            z-index: 4;
+            visibility: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        #resultEmoji {
+            font-size: 10em;
+            margin-bottom: 20px;
+        }
+        #resultText {
+            color: #fff;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        #returnBtn {
+            width: 200px;
+            height: 60px;
+            font-size: 1.5em;
+            background: #333;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        /* Loading spinner */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.7);
+            z-index: 5;
+            visibility: hidden;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #333;
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Selection Screen -->
+    <div id="selectionScreen">
+        <button id="resetBtn" onclick="resetProgress()">Reset Progress</button>
+        <h1>Select a competition level</h1>
+        <div id="levelsContainer"></div>
+    </div>
+
+    <!-- Video Game Screen -->
+    <div id="videoContainer" style="display:none;">
+        <video id="video" controls preload="metadata" playsinline webkit-playsinline></video>
+        <div id="overlay">
+            <button class="btn red" onclick="makeChoice('r')">Aka</button>
+            <button class="btn white" onclick="makeChoice('w')">Shiro</button>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultOverlay">
+        <div id="resultEmoji"></div>
+        <div id="resultText"></div>
+        <!-- <button id="returnBtn" onclick="returnToSelection()">Return to level select</button> -->
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
+        const selectionScreen = document.getElementById('selectionScreen');
+        const videoContainer = document.getElementById('videoContainer');
+        const resultOverlay = document.getElementById('resultOverlay');
+        const resultEmoji = document.getElementById('resultEmoji');
+        const resultText = document.getElementById('resultText');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // Game state
+        let currentLevel = '';
+        let currentVideoNumber = 0;
+        let gameStarted = false;
+        let videoDuration = 0;
+        let choiceMade = false; // Track if choice has been made
+
+        // Game configuration - easily extensible
+        const levels = [
+            { id: 'shodan', name: 'Shodan', folderNumber: 1 },
+            { id: 'nidan', name: 'Nidan', folderNumber: 2 },
+            { id: 'sandan', name: 'Sandan', folderNumber: 3 },
+            { id: 'yodan', name: 'Yondan', folderNumber: 4 },
+            { id: 'godan', name: 'Godan', folderNumber: 5 },
+            { id: 'rokudan', name: 'Rokudan', folderNumber: 6 },
+            { id: 'nanadan', name: 'Nanadan', folderNumber: 7 }
+        ];
+
+        const videosPerLevel = 3; // Number of videos per level
+
+        // Correct answers for each video
+        const correctAnswers = {
+            1: ['w', 'w', 'r'], // vid/1/1=white, vid/1/2=white, vid/1/3=red
+            2: ['w', 'r', 'r'],  // vid/2/1=white, vid/2/2=red, vid/2/3=red
+            3: ['w', 'r', 'w'],
+            4: ['r', 'w', 'w'],
+            5: ['w', 'w', 'r'],
+            6: ['r', 'w', 'r'],
+            7: ['r', 'r', 'w']
+        };
+
+        // Progress tracking
+        let progress = {};
+
+        // Initialize progress for all levels
+        function initializeProgress() {
+            levels.forEach(level => {
+                if (!progress[level.id]) {
+                    progress[level.id] = new Array(videosPerLevel).fill(null);
+                }
+            });
+            // Load from localStorage if available
+            const saved = localStorage.getItem('shinpanProgress');
+            if (saved) {
+                progress = { ...progress, ...JSON.parse(saved) };
+            }
+        }
+
+        // Save progress to localStorage
+        function saveProgress() {
+            localStorage.setItem('shinpanProgress', JSON.stringify(progress));
+        }
+
+        // Create the selection screen dynamically
+        function createSelectionScreen() {
+            const container = document.getElementById('levelsContainer');
+            container.innerHTML = '';
+
+            levels.forEach(level => {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'level-container';
+
+                const nextVideo = getNextVideoNumber(level.id);
+                const isCompleted = nextVideo > videosPerLevel;
+                const isDisabled = nextVideo === 0; // No videos available yet
+
+                const button = document.createElement('button');
+                button.className = 'selection-btn';
+                button.textContent = level.name;
+                button.onclick = () => startGame(level.id);
+                
+                if (isCompleted) {
+                    button.textContent += ' (Complete)';
+                }
+
+                if (isDisabled) {
+                    button.disabled = true;
+                }
+
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'progress-boxes';
+
+                for (let i = 0; i < videosPerLevel; i++) {
+                    const box = document.createElement('div');
+                    box.className = 'progress-box';
+                    const result = progress[level.id][i];
+                    
+                    if (result === true) {
+                        box.className += ' correct';
+                        box.textContent = '⭕';
+                    } else if (result === false) {
+                        box.className += ' incorrect';
+                        box.textContent = '❌';
+                    }
+                    
+                    progressDiv.appendChild(box);
+                }
+
+                levelDiv.appendChild(button);
+                levelDiv.appendChild(progressDiv);
+                container.appendChild(levelDiv);
+            });
+        }
+
+        // Get the next video number to play for a level
+        function getNextVideoNumber(levelId) {
+            const levelProgress = progress[levelId];
+            for (let i = 0; i < levelProgress.length; i++) {
+                if (levelProgress[i] === null) {
+                    return i + 1; // Return 1-based index
+                }
+            }
+            return levelProgress.length + 1; // All completed
+        }
+
+        function startGame(levelId) {
+            currentLevel = levelId;
+            currentVideoNumber = getNextVideoNumber(levelId);
+            
+            // Check if level is completed
+            if (currentVideoNumber > videosPerLevel) {
+                alert('Level completed!');
+                return;
+            }
+            
+            // Show loading overlay
+            loadingOverlay.style.visibility = 'visible';
+            
+            // Hide selection screen and show video
+            selectionScreen.style.display = 'none';
+            videoContainer.style.display = 'flex';
+            
+            // Get level configuration
+            const level = levels.find(l => l.id === levelId);
+            
+            // Load the video
+            video.src = `vid/${level.folderNumber}/${currentVideoNumber}.mp4`;
+            
+            // Reset video state
+            gameStarted = false;
+            choiceMade = false; // Reset choice state
+            video.currentTime = 0;
+            
+            // Start video on first click
+            document.addEventListener('click', startVideoOnce);
+        }
+
+        function startVideoOnce() {
+            if (!gameStarted) {
+                video.currentTime = 0;
+                // Use a promise-based approach for better iOS compatibility
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        gameStarted = true;
+                    }).catch(error => {
+                        console.log("Auto-play was prevented:", error);
+                        // On iOS, we might need user interaction to play
+                        gameStarted = true;
+                    });
+                } else {
+                    gameStarted = true;
+                }
+                document.removeEventListener('click', startVideoOnce);
+            }
+        }
+
+        // Get video duration when metadata is loaded
+        video.addEventListener('loadedmetadata', function() {
+            videoDuration = video.duration;
+            // Hide loading overlay when video is ready
+            loadingOverlay.style.visibility = 'hidden';
+        });
+
+        // Add error handling for video loading issues
+        video.addEventListener('error', function(e) {
+            console.error('Video error:', e);
+            loadingOverlay.style.visibility = 'hidden';
+            alert('Error loading video. Please check your internet connection and try again.');
+            returnToSelection();
+        });
+
+        // Add additional event for when video can play
+        video.addEventListener('canplay', function() {
+            loadingOverlay.style.visibility = 'hidden';
+        });
+
+        video.addEventListener('timeupdate', function() {
+            // Pause 15 seconds before the end (only if choice hasn't been made)
+            if (videoDuration > 0 && video.currentTime >= (videoDuration - 12) && !choiceMade) {
+                video.pause();
+                overlay.style.visibility = 'visible';
+            }
+        });
+
+        function makeChoice(choice) {
+            // Prevent multiple choices
+            if (choiceMade) return;
+            
+            choiceMade = true;
+            overlay.style.visibility = 'hidden';
+            
+            // Check the answer immediately
+            checkAnswer(choice);
+        }
+
+        function checkAnswer(userChoice) {
+            const level = levels.find(l => l.id === currentLevel);
+            const correctChoice = correctAnswers[level.folderNumber][currentVideoNumber - 1]; // -1 because array is 0-indexed
+            
+            const isCorrect = userChoice === correctChoice;
+
+            // Save progress
+            progress[currentLevel][currentVideoNumber - 1] = isCorrect;
+            saveProgress();
+
+            // Show result
+            if (isCorrect) {
+                resultEmoji.textContent = '⭕';
+                // resultText.textContent = 'Correct!';
+                resultOverlay.style.visibility = 'visible';
+                
+                // Play the rest of the video after showing correct message
+                setTimeout(() => {
+                    resultOverlay.style.visibility = 'hidden';
+                    // Use promise-based play for iOS compatibility
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Play was prevented:", error);
+                        });
+                    }
+                    
+                    // When video ends, return to selection
+                    video.addEventListener('ended', function() {
+                        returnToSelection();
+                    }, { once: true });
+                }, 1000); // Show correct message for 2 seconds
+            } else {
+                resultEmoji.textContent = '❌';
+                // resultText.textContent = 'Incorrect!';
+                resultOverlay.style.visibility = 'visible';
+                
+                // Play the rest of the video to show the correct answer
+                setTimeout(() => {
+                    resultOverlay.style.visibility = 'hidden';
+                    // Use promise-based play for iOS compatibility
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Play was prevented:", error);
+                        });
+                    }
+                    
+                    // When video ends, return to selection
+                    video.addEventListener('ended', function() {
+                        returnToSelection();
+                    }, { once: true });
+                }, 1000); // Show incorrect message for 2 seconds
+            }
+        }
+
+        function returnToSelection() {
+            // Hide all overlays and video
+            resultOverlay.style.visibility = 'hidden';
+            overlay.style.visibility = 'hidden';
+            loadingOverlay.style.visibility = 'hidden';
+            videoContainer.style.display = 'none';
+            
+            // Show selection screen with updated progress
+            selectionScreen.style.display = 'flex';
+            createSelectionScreen();
+            
+            // Reset video
+            video.pause();
+            video.currentTime = 0;
+            
+            // Reset game state
+            currentLevel = '';
+            currentVideoNumber = 0;
+            gameStarted = false;
+            choiceMade = false; // Reset choice state
+        }
+
+        // Reset progress function
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                localStorage.removeItem('shinpanProgress');
+                location.reload(); // Reload the page to ensure clean state
+            }
+        }
+
+        // Initialize the game when page loads
+        window.addEventListener('load', function() {
+            initializeProgress();
+            createSelectionScreen();
+        });
+    </script>
+</body>
+</html>
