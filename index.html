@@ -390,7 +390,7 @@
 
         video.addEventListener('timeupdate', function() {
             // Pause 15 seconds before the end (only if choice hasn't been made)
-            if (videoDuration > 0 && video.currentTime >= (5) && !choiceMade) {
+            if (videoDuration > 0 && video.currentTime >= (videoDuration - 12) && !choiceMade) {
                 video.pause();
                 overlay.style.visibility = 'visible';
             }
