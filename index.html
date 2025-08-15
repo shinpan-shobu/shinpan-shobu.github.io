@@ -318,8 +318,8 @@
 
         // Correct answers for each video
         const correctAnswers = {
-            1: ['w', 'w', 'r'], // vid/1/1=white, vid/1/2=white, vid/1/3=red
-            2: ['w', 'r', 'r'],  // vid/2/1=white, vid/2/2=red, vid/2/3=red
+            1: ['w', 'w', 'r'], // v/1/1=white, v/1/2=white, v/1/3=red
+            2: ['w', 'r', 'r'], 
             3: ['w', 'r', 'w'],
             4: ['r', 'w', 'w'],
             5: ['w', 'w', 'r'],
@@ -334,7 +334,7 @@
         function initializeProgress() {
             levels.forEach(level => {
                 if (!progress[level.id]) {
-                    progress[level.id] = new Array(videosPerLevel).fill(null);
+                    progress[level.id] = new Array(videosPerLevel).fill(null); 
                 }
             });
             // Load from localStorage if available
