@@ -360,44 +360,43 @@
                 const levelDiv = document.createElement('div');
                 levelDiv.className = 'level-container';
 
-                const nextVideo = getNextVideoNumber(level.id);
-                const isCompleted = nextVideo > videosPerLevel;
-                const isDisabled = nextVideo === 0; // No videos available yet
+                // Dan grade title
+                const danTitle = document.createElement('div');
+                danTitle.style.color = '#fff';
+                danTitle.style.fontWeight = 'bold';
+                danTitle.style.marginBottom = '8px';
+                danTitle.textContent = level.name;
+                levelDiv.appendChild(danTitle);
 
-                const button = document.createElement('button');
-                button.className = 'selection-btn';
-                button.textContent = level.name;
-                button.onclick = () => startGame(level.id);
-                
-                if (isCompleted) {
-                    button.textContent += ' (Complete)';
-                }
+                // Level buttons
+                const levelBtnsDiv = document.createElement('div');
+                levelBtnsDiv.style.display = 'flex';
+                levelBtnsDiv.style.gap = '8px';
+                levelBtnsDiv.style.justifyContent = 'center';
 
-                if (isDisabled) {
-                    button.disabled = true;
-                }
-
-                const progressDiv = document.createElement('div');
-                progressDiv.className = 'progress-boxes';
+                const levelProgress = progress[level.id];
 
                 for (let i = 0; i < videosPerLevel; i++) {
-                    const box = document.createElement('div');
-                    box.className = 'progress-box';
-                    const result = progress[level.id][i];
-                    
-                    if (result === true) {
-                        box.className += ' correct';
-                        box.textContent = '⭕';
-                    } else if (result === false) {
-                        box.className += ' incorrect';
-                        box.textContent = '❌';
+                    const btn = document.createElement('button');
+                    btn.className = 'selection-btn';
+                    btn.style.width = '60px';
+                    btn.style.height = '60px';
+                    btn.style.margin = '0';
+                    btn.style.fontSize = '1.2em';
+                    // Progress indicator
+                    if (levelProgress[i] === true) {
+                        btn.textContent = '⭕';
+                    } else if (levelProgress[i] === false) {
+                        btn.textContent = '❌';
+                    } else {
+                        btn.textContent = (i + 1);
                     }
-                    
-                    progressDiv.appendChild(box);
+                    btn.disabled = false;
+                    btn.onclick = () => startGame(level.id, i + 1);
+                    levelBtnsDiv.appendChild(btn);
                 }
 
-                levelDiv.appendChild(button);
-                levelDiv.appendChild(progressDiv);
+                levelDiv.appendChild(levelBtnsDiv);
                 container.appendChild(levelDiv);
             });
         }
@@ -413,34 +412,28 @@
             return levelProgress.length + 1; // All completed
         }
 
-        function startGame(levelId) {
+        function startGame(levelId, videoNumber) {
             currentLevel = levelId;
-            currentVideoNumber = getNextVideoNumber(levelId);
-            
-            // Check if level is completed
-            if (currentVideoNumber > videosPerLevel) {
-                alert('Level completed!');
-                return;
-            }
-            
+            currentVideoNumber = videoNumber;
+
             // Show loading overlay
             loadingOverlay.style.visibility = 'visible';
-            
+
             // Hide selection screen and show video
             selectionScreen.style.display = 'none';
             videoContainer.style.display = 'flex';
-            
+
             // Get level configuration
             const level = levels.find(l => l.id === levelId);
-            
+
             // Load the video
             video.src = `v/${level.folderNumber}/${currentVideoNumber}`;
-            
+
             // Reset video state
             gameStarted = false;
             choiceMade = false; // Reset choice state
             video.currentTime = 0;
-            
+
             // Start video on first click
             document.addEventListener('click', startVideoOnce);
         }
@@ -487,7 +480,7 @@
 
         video.addEventListener('timeupdate', function() {
             // Pause 15 seconds before the end (only if choice hasn't been made)
-            if (videoDuration > 0 && video.currentTime >= (videoDuration - 12) && !choiceMade) {
+            if (videoDuration > 0 && video.currentTime >= (2) && !choiceMade) {
                 video.pause();
                 overlay.style.visibility = 'visible';
             }
